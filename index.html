@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>台灣對外網路流量 degrade 模擬</title>
+    <link rel="stylesheet" href="node_modules/reveal.js/dist/reset.css">
+    <link rel="stylesheet" href="node_modules/reveal.js/dist/reveal.css">
+    <link rel="stylesheet" href="node_modules/reveal.js/dist/theme/black.css">
+    <link rel="stylesheet" href="node_modules/reveal.js/dist/plugin/highlight/monokai.css">
+    <style>
+      html, body { height: 100%; width: 100%; margin: 0; padding: 0; }
+      #presentation-footer {
+        position: fixed;
+        bottom: 1em;
+        left: 1.5em;
+        right: 1.5em;
+        display: flex;
+        justify-content: space-between;
+        font-family: "Source Sans Pro", Helvetica, sans-serif;
+        font-size: 1.25em;
+        color: rgba(255, 255, 255, 0.4);
+        z-index: 100;
+      }
+      #presentation-footer a {
+        color: inherit;
+        text-decoration: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="reveal">
+      <div class="slides">
+        <!-- Cold Open -->
+        <section data-markdown="slides/00-cold-open.md"
+                 data-separator="^\n---\n$"
+                 data-separator-notes="^Note:">
+        </section>
+
+        <!-- Phase 1: 0–5 分鐘 -->
+        <section data-markdown="slides/01-phase1.md"
+                 data-separator="^\n---\n$"
+                 data-separator-notes="^Note:">
+        </section>
+
+        <!-- Phase 2: 5–30 分鐘 -->
+        <section data-markdown="slides/02-phase2.md"
+                 data-separator="^\n---\n$"
+                 data-separator-notes="^Note:">
+        </section>
+
+        <!-- Phase 3: 30–60 分鐘 -->
+        <section data-markdown="slides/03-phase3.md"
+                 data-separator="^\n---\n$"
+                 data-separator-notes="^Note:">
+        </section>
+
+        <!-- Phase 4: 1–6 小時 -->
+        <section data-markdown="slides/04-phase4.md"
+                 data-separator="^\n---\n$"
+                 data-separator-notes="^Note:">
+        </section>
+
+        <!-- Wrap-up: 總結 -->
+        <section data-markdown="slides/05-wrapup.md"
+                 data-separator="^\n---\n$"
+                 data-separator-notes="^Note:">
+        </section>
+
+      </div>
+    </div>
+    <footer id="presentation-footer">
+      <span><a href="https://crcolab.art" target="_blank" rel="noopener noreferrer">CHENG PENG (paulpengtw) @ crcolab.art</a></span>
+      <span><a href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh-hant" target="_blank" rel="noopener noreferrer">簡報所有內容皆以 CC-BY-SA 4.0 by CHENG PENG (paulpengtw) 授權釋出</a></span>
+    </footer>
+    <script src="node_modules/reveal.js/dist/reveal.js"></script>
+    <script src="node_modules/reveal.js/dist/plugin/highlight.js"></script>
+    <script src="node_modules/reveal.js/dist/plugin/notes.js"></script>
+    <script src="node_modules/reveal.js/dist/plugin/markdown.js"></script>
+    <script>
+      const ZOOM = 0.6;  // adjust this: >1 = bigger content, <1 = smaller
+      Reveal.initialize({
+        hash: true,
+        width: Math.round(960 / ZOOM),
+        height: Math.round(700 / ZOOM),
+        margin: 0.04,
+        plugins: [RevealHighlight, RevealNotes, RevealMarkdown]
+      }).then(() => {
+        document.querySelectorAll('.slides a[href^="http"]').forEach(a => {
+          a.setAttribute('target', '_blank');
+          a.setAttribute('rel', 'noopener noreferrer');
+        });
+      });
+    </script>
+  </body>
+</html>
