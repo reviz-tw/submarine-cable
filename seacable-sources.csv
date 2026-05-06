@@ -1,0 +1,16 @@
+id,platform,priority,source_type,region,name,url,url_status,seed_strategy,time_depth_target,crawl_value,search_hint
+fb_moda,facebook,P1,government,taiwan,數位發展部 moda,https://www.facebook.com/moda.gov.tw/,confirmed,timeline_backfill,2023-01-01_to_present,policy_response_and_event_timeline,
+fb_cht_main,facebook,P1,telecom,taiwan,中華電信主頁或最接近公司公共訊息的主頁,,verify_main_page,timeline_backfill,oldest_available_to_present,repair_updates_and_infrastructure_context,中華電信 Facebook 官方主頁
+fb_lienchiang,facebook,P1,local_government,matsu,連江縣政府 / 馬祖地方政府相關頁面,,verify_main_page,timeline_backfill,oldest_available_to_present,local_impact_and_response,連江縣政府 Facebook 官方頁 馬祖
+fb_matsu_news,facebook,P1,local_media,matsu,馬祖日報 / 馬祖地方新聞或在地資訊頁,,verify_main_page,timeline_backfill,oldest_available_to_present,local_daily_discussion,馬祖日報 Facebook
+fb_cna,facebook,P1,media,taiwan,中央社 CNA,https://www.facebook.com/cnanewstaiwan/,confirmed,timeline_backfill,oldest_available_to_present,mainstream_reporting_and_high_signal_posts,
+fb_twreporter,facebook,P1,media,taiwan,報導者 The Reporter,https://www.facebook.com/twreporter/,confirmed,timeline_backfill,oldest_available_to_present,feature_reporting_and_comment_depth,
+fb_pnnpts,facebook,P1,media,taiwan,公視新聞網 PNN,https://www.facebook.com/pnnpts/,confirmed,timeline_backfill,oldest_available_to_present,public_media_and_policy_context,
+fb_ettoday,facebook,P1,media,taiwan,ETtoday 新聞雲,https://www.facebook.com/ETtoday,confirmed,timeline_backfill,oldest_available_to_present,high_engagement_breaking_news,
+fb_tvbsfb,facebook,P1,media,taiwan,TVBS 新聞,https://www.facebook.com/tvbsfb/,confirmed,timeline_backfill,oldest_available_to_present,political_framing_and_high_reach_posts,
+fb_setn,facebook,P1,media,taiwan,三立新聞,,verify_main_page,timeline_backfill,oldest_available_to_present,high_engagement_political_discussion,三立新聞 Facebook 官方頁
+fb_udnplus,facebook,P1,media,taiwan,聯合報,https://www.facebook.com/udnplus/,confirmed,timeline_backfill,oldest_available_to_present,mainstream_reporting_and_comment_polarization,
+fb_ltn,facebook,P1,media,taiwan,自由時報,,verify_main_page,timeline_backfill,oldest_available_to_present,national_security_framing,自由時報 Facebook 官方頁
+fb_inside,facebook,P2,tech_media,taiwan,INSIDE,,verify_main_page,keyword_hit_only,oldest_available_to_present,tech_and_infrastructure_analysis,INSIDE Facebook 台灣
+fb_ithome,facebook,P2,tech_media,taiwan,iThome,,verify_main_page,keyword_hit_only,oldest_available_to_present,network_and_resilience_analysis,iThome Facebook 台灣
+fb_techorange,facebook,P2,tech_media,taiwan,TechOrange,,verify_main_page,keyword_hit_only,oldest_available_to_present,policy_and_technology_commentary,TechOrange Facebook 台灣

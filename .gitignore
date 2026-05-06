@@ -1,2 +1,9 @@
 node_modules/
 .DS_Store
+.env
+raw/
+.selenium-profile-firefox*/
+.selenium-profile-meta/
+__pycache__/
+*.pyc
+

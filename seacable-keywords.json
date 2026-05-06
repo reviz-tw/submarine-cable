@@ -1,0 +1,24 @@
+{
+  "topic": "taiwan-seacable-discussion",
+  "version": "2026-04-22",
+  "primary_keywords": [
+    "海底電纜",
+    "海纜"
+  ],
+  "tag_only_terms": [
+    "台馬",
+    "馬祖",
+    "斷裂",
+    "切斷",
+    "中斷",
+    "故障",
+    "修復"
+  ],
+  "rules": {
+    "search_only_primary_keywords": true,
+    "notes": [
+      "第一層搜尋固定只用 primary_keywords。",
+      "tag_only_terms 不作為第一層搜尋入口，只用於標記、篩選、人工複核與事件分群。"
+    ]
+  }
+}
