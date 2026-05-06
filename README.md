@@ -1,23 +1,33 @@
-# 台灣對外網路流量 degrade 模擬
+# 台灣海底電纜社群輿論研究
 
-This work is licensed under CC BY-SA 4.0 by [CHENG PENG (paulpengtw)](https://crcolab.art)
+社群媒體（Facebook、Threads）上台灣海底電纜相關討論的爬取與分析。
 
-## 檔案結構
+## 資料蒐集
 
-```
-index.html                  ← 主框架，引用外部 Markdown 檔
-slides/
-  00-cold-open.md           ← Cold Open（2 張）
-  01-phase1.md              ← 第一階段：0–5 分鐘（10 張）
-  02-phase2.md              ← 第二階段：5–30 分鐘（20 張）
-```
+使用 Selenium + Firefox 登入後爬取，詳見 [`social-crawler/README.md`](social-crawler/README.md)。
 
-投影片內容以 Markdown 撰寫，透過 reveal.js `data-markdown` 屬性在執行時載入。每個 `.md` 檔內以 `---` 分隔各張投影片。
-## 使用方式
+## 標註流程
+
+- `label_comments.py`：留言五向度批次標註（topic / belief / misconception / stance / solution）
+- `label_posts.py`：貼文 post_type 分類
+
+快速開始：
 
 ```bash
-npm install          # 安裝 reveal.js
-npx serve            # 啟動於 localhost:3000
+python3.12 label_comments.py sample
+python3.12 label_comments.py submit
+python3.12 label_comments.py fetch
+python3.12 label_comments.py merge
 ```
 
-開啟瀏覽器後按 `S` 鍵可開啟講者備註視窗。
+## 分析報告
+
+```bash
+python3.12 generate_report.py
+```
+
+輸出 `report.html`，含整體分佈、平台比較、post_type × 各向度交叉分析、逐篇貼文向度分佈。
+
+## 資料
+
+- `normalized/comments-labeled-v2.json`：8332 筆留言（FB 3239 + Threads 5093），含平台、貼文、留言內容與五向度標註
