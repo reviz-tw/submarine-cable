@@ -1246,14 +1246,15 @@ gsap.set('.panel',{opacity:0,y:14});
 // header/dots hidden via body.intro-on CSS class (avoids GSAP inline-style conflicts)
 
 function showPanel(stage){
-  // Hide all panels
-  panels.forEach(p=>gsap.set(p,{opacity:0,y:14}));
+  // Kill any in-flight panel tweens first, then hard-reset all panels.
+  // Without killTweensOf, a fast reverse-scroll triggers multiple onEnterBack
+  // callbacks simultaneously; their overlapping gsap.to({opacity:1}) tweens
+  // survive the gsap.set({opacity:0}) call and all panels end up visible.
+  panels.forEach(p=>{ gsap.killTweensOf(p); gsap.set(p,{opacity:0,y:14}); });
   dots.forEach((d,i)=>d.classList.toggle('on',i===stage));
   // Show panel for this stage if it has one
   const pid=pMap[stage];
-  if(pid) gsap.to('#'+pid,{opacity:1,y:0,duration:.55,ease:'power2.out',overwrite:true});
-  // Toggle light header for 2D stages
-  // no light-mode toggle needed — 2D overlays are now dark-themed
+  if(pid) gsap.to('#'+pid,{opacity:1,y:0,duration:.55,ease:'power2.out'});
 }
 
 function lerp(a,b,t){return a+(b-a)*t;}
