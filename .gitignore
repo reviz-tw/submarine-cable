@@ -7,3 +7,40 @@ raw/
 __pycache__/
 *.pyc
 
+# 爬蟲中間狀態 / 未整理資料
+normalized/facebook-*.json
+normalized/threads-current-*.json
+normalized/threads-logged-*.json
+normalized/threads-新抓-*.json
+normalized/threads-補抓-*.txt
+normalized/threads-new-703.json
+normalized/label-*.json
+normalized/relabel-*.json
+normalized/misconception-*.json
+normalized/seacable-seed-*.json
+normalized/google-site-search-*.json
+normalized/google-site-search-*.csv
+normalized/comments-labeled.json
+normalized/comments-labeled-test.json
+normalized/comments-open-coding-sample.json
+
+# 爬蟲工具
+tools/
+
+# 種子資料 / Google 搜尋結果
+google-site-search-*.json
+seacable-posts-seed-*.csv
+seacable-posts-seed-*.json
+seacable-comments-*.json
+seacable-crawl-runs-*.json
+seacable-seed-hits-*.md
+fetch-seacable-seeds.js
+generate-google-site-search-seeds.js
+validate-seacable-seeds.js
+social-crawl-plan.md
+simulation.html
+assets/
+reference-data/
+research/
+normalized/seacable-social-*.json
+normalized/threads-comments-from-snapshots-*.json
