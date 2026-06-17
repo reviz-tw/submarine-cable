@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>台灣海底電纜 — 互動探索</title>
+  <title>台灣數位生命線：海底電纜</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;700&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
@@ -20,7 +20,7 @@
       --text-dim:#7a9ab0;
     }
     html { scroll-behavior:auto; }
-    body { background:var(--navy); font-family:'Noto Sans TC','PingFang TC',sans-serif; color:var(--text-dark); overflow-x:hidden; }
+    body { background:linear-gradient(180deg,#eef7fc 0%,#d7e9f3 100%); font-family:'Noto Sans TC','PingFang TC',sans-serif; color:var(--text-dark); overflow-x:hidden; }
 
     /* ── 3D Canvas ── */
     #canvas-wrap { position:fixed; inset:0; z-index:0; }
@@ -33,6 +33,8 @@
       display:flex; align-items:stretch;
     }
     .illo-wrap svg { width:100%; height:100%; display:block; }
+    /* 淺海／深海已改為 3D 場景，停用這兩張 2D SVG overlay */
+    #illo-shallow, #illo-deep { display:none !important; }
 
     /* ── UI chrome ── */
     #ui { position:fixed; inset:0; z-index:50; pointer-events:none; }
@@ -40,12 +42,13 @@
     #header {
       position:absolute; top:24px; left:50%; transform:translateX(-50%);
       text-align:center;
-      background:rgba(255,255,255,0.12); backdrop-filter:blur(10px);
+      background:rgba(255,255,255,0.75); backdrop-filter:blur(10px);
       padding:8px 24px; border-radius:30px;
-      border:1px solid rgba(255,255,255,0.15);
+      border:1px solid rgba(0,90,160,0.15);
+      box-shadow:0 2px 14px rgba(20,60,100,0.10);
     }
-    #header h1 { font-size:14px; font-weight:700; letter-spacing:5px; color:#fff; }
-    #header p  { font-size:10px; letter-spacing:3px; color:rgba(0,170,255,0.85); margin-top:3px; }
+    #header h1 { font-size:14px; font-weight:700; letter-spacing:5px; color:var(--text-dark); }
+    #header p  { font-size:10px; letter-spacing:3px; color:#0077cc; margin-top:3px; }
 
     /* header in light mode (2D sections) */
     #header.light { background:rgba(255,255,255,0.85); border-color:rgba(0,100,180,0.15); }
@@ -59,20 +62,51 @@
     }
     .dot {
       width:7px; height:7px; border-radius:50%;
-      background:rgba(255,255,255,0.15);
-      border:1px solid rgba(255,255,255,0.2);
+      background:rgba(20,55,90,0.18);
+      border:1px solid rgba(20,55,90,0.28);
       cursor:pointer; transition:background .3s, box-shadow .3s;
     }
-    .dot.on  { background:#00aaff; box-shadow:0 0 8px #00aaff, 0 0 16px #00aaff; }
+    .dot.on  { background:#0088dd; box-shadow:0 0 7px rgba(0,120,200,.7), 0 0 14px rgba(0,120,200,.4); border-color:#0088dd; }
     .dot.on.dark { background:var(--navy); box-shadow:0 0 8px #0066cc; border-color:#0066cc; }
+
+    /* ── Depth gauge (淺海→深海 下潛時的深度標尺；1,500m = 埋設↔裸放分界) ── */
+    #depth-gauge {
+      position:absolute; right:30px; top:50%; transform:translateY(-50%);
+      height:62vh; width:150px; pointer-events:none;
+      opacity:0; transition:opacity .5s ease;
+      font-family:'Noto Sans TC','PingFang TC',sans-serif;
+    }
+    #depth-gauge.on { opacity:1; }
+    .dg-track {
+      position:absolute; right:7px; top:0; bottom:0; width:2px; border-radius:1px;
+      background:linear-gradient(to bottom, rgba(0,120,200,.18), rgba(0,90,150,.55));
+    }
+    .dg-mark {
+      position:absolute; right:14px; transform:translateY(-50%);
+      text-align:right; white-space:nowrap; color:#4a6680; font-size:11px; letter-spacing:.5px;
+    }
+    .dg-mark::after { /* tick to the track */
+      content:''; position:absolute; right:-11px; top:50%; width:9px; height:1px;
+      background:rgba(0,90,150,.5); transform:translateY(-50%);
+    }
+    .dg-mark b { display:block; font-weight:700; color:#14304a; font-size:12.5px; }
+    .dg-mark small { font-size:9px; letter-spacing:1px; color:#8aa0b4; }
+    .dg-boundary b { color:#0077cc; transition:color .3s ease; }
+    .dg-boundary em { display:block; font-style:normal; font-size:9.5px; letter-spacing:1px; color:#0088cc; margin-top:1px; }
+    .dg-boundary.lit b, .dg-boundary.lit em { color:#e0660a; } /* 跨過分界時轉橘 */
+    .dg-cursor {
+      position:absolute; right:3px; width:11px; height:11px; border-radius:50%;
+      background:#0088dd; box-shadow:0 0 9px rgba(0,130,210,.85);
+      transform:translate(50%,-50%); top:8%; transition:top .12s linear;
+    }
 
     /* Scroll hint */
     #scroll-hint {
       position:absolute; bottom:28px; left:50%; transform:translateX(-50%);
       text-align:center; animation:bobFloat 2.4s ease-in-out infinite;
     }
-    #scroll-hint span { display:block; font-size:10px; letter-spacing:4px; color:rgba(255,255,255,.4); text-transform:uppercase; }
-    #scroll-hint .arr { width:1px; height:28px; background:linear-gradient(to bottom,transparent,rgba(0,170,255,.6)); margin:7px auto 0; }
+    #scroll-hint span { display:block; font-size:10px; letter-spacing:4px; color:rgba(20,60,100,.5); text-transform:uppercase; }
+    #scroll-hint .arr { width:1px; height:28px; background:linear-gradient(to bottom,transparent,rgba(0,120,200,.7)); margin:7px auto 0; }
     @keyframes bobFloat {
       0%,100% { opacity:.5; transform:translateX(-50%) translateY(0); }
       50%      { opacity:1;  transform:translateX(-50%) translateY(8px); }
@@ -109,6 +143,9 @@
     .sw { width:13px; height:13px; border-radius:50%; flex-shrink:0; border:1px solid rgba(0,0,0,.1); }
     .ln { color:var(--text-dark); font-weight:600; min-width:76px; }
     .ld { color:var(--text-dim); font-size:11px; }
+    /* XS build-up: legend rows light up as each layer wraps on */
+    #p0 .lr { opacity:.28; transition:opacity .35s ease; }
+    #p0 .lr.lit { opacity:1; }
 
     /* Tags / stats */
     .tags { margin-top:12px; }
@@ -146,15 +183,15 @@
     /* ── Long-form articles ─────────────────────────── */
     #articles {
       position: relative; z-index: 30;
-      background: #050d1c;
-      color: #c0cad5;
+      background: #eaf3fa;
+      color: #3a5570;
       font-family: 'Noto Sans TC','PingFang TC',sans-serif;
       padding: 120px 6% 100px;
     }
     #articles::before {
-      /* soft transition from the dark 3D scene */
+      /* soft transition from the 3D scene */
       content: ''; position: absolute; top: -120px; left: 0; right: 0; height: 120px;
-      background: linear-gradient(to bottom, transparent 0%, #050d1c 100%);
+      background: linear-gradient(to bottom, transparent 0%, #eaf3fa 100%);
       pointer-events: none;
     }
     .articles-intro {
@@ -165,11 +202,11 @@
       font-weight: 700; text-transform: uppercase; margin-bottom: 14px;
     }
     .articles-headline {
-      font-size: 32px; font-weight: 700; color: #fff;
+      font-size: 32px; font-weight: 700; color: #14304a;
       line-height: 1.35; margin-bottom: 14px;
     }
     .articles-lead {
-      font-size: 15px; line-height: 1.95; color: #8a9ab0;
+      font-size: 15px; line-height: 1.95; color: #4a6680;
     }
     .articles-grid {
       display: grid;
@@ -179,15 +216,17 @@
     .article-card {
       display: block; position: relative;
       padding: 30px;
-      background: rgba(255,255,255,0.025);
-      border: 1px solid rgba(0,170,255,0.15);
+      background: #ffffff;
+      border: 1px solid rgba(0,120,200,0.18);
       border-radius: 12px;
       color: inherit; text-decoration: none;
-      transition: background .25s ease, border-color .25s ease, transform .25s ease;
+      box-shadow: 0 4px 20px rgba(20,60,100,0.07);
+      transition: background .25s ease, border-color .25s ease, transform .25s ease, box-shadow .25s ease;
     }
     .article-card:hover {
-      background: rgba(0,170,255,0.06);
-      border-color: rgba(0,170,255,0.4);
+      background: #f4fbff;
+      border-color: rgba(0,140,220,0.45);
+      box-shadow: 0 8px 28px rgba(20,60,100,0.12);
       transform: translateY(-3px);
     }
     .article-card-top {
@@ -203,7 +242,7 @@
       border: 1px solid rgba(0,170,255,0.2); border-radius: 20px;
     }
     .article-card h3 {
-      font-size: 20px; font-weight: 700; color: #fff;
+      font-size: 20px; font-weight: 700; color: #14304a;
       line-height: 1.4; margin-bottom: 8px;
     }
     .article-card-sub {
@@ -219,8 +258,8 @@
     /* ── External portal cards ──────────────────────── */
     #portals {
       position: relative; z-index: 30;
-      background: #04091a;
-      color: #c0cad5;
+      background: #e0edf5;
+      color: #3a5570;
       font-family: 'Noto Sans TC','PingFang TC',sans-serif;
       padding: 100px 6% 140px;
     }
@@ -231,11 +270,11 @@
       font-weight: 700; text-transform: uppercase; margin-bottom: 14px;
     }
     .portals-title {
-      font-size: 28px; font-weight: 700; color: #fff;
+      font-size: 28px; font-weight: 700; color: #14304a;
       line-height: 1.35; margin-bottom: 14px;
     }
     .portals-lead {
-      font-size: 14px; line-height: 1.9; color: #8a9ab0;
+      font-size: 14px; line-height: 1.9; color: #4a6680;
     }
     .portals-grid {
       display: grid;
@@ -245,15 +284,17 @@
     .portal-card {
       display: block; position: relative;
       padding: 30px;
-      background: rgba(255,255,255,0.025);
-      border: 1px solid rgba(0,170,255,0.15);
+      background: #ffffff;
+      border: 1px solid rgba(0,120,200,0.18);
       border-radius: 12px;
       color: inherit; text-decoration: none;
-      transition: background .25s ease, border-color .25s ease, transform .25s ease;
+      box-shadow: 0 4px 20px rgba(20,60,100,0.07);
+      transition: background .25s ease, border-color .25s ease, transform .25s ease, box-shadow .25s ease;
     }
     .portal-card:hover {
-      background: rgba(0,170,255,0.06);
-      border-color: rgba(0,170,255,0.4);
+      background: #f4fbff;
+      border-color: rgba(0,140,220,0.45);
+      box-shadow: 0 8px 28px rgba(20,60,100,0.12);
       transform: translateY(-3px);
     }
     .portal-card-top {
@@ -268,7 +309,7 @@
       font-family: 'SF Mono', Menlo, monospace;
     }
     .portal-card h3 {
-      font-size: 20px; font-weight: 700; color: #fff;
+      font-size: 20px; font-weight: 700; color: #14304a;
       line-height: 1.35; margin-bottom: 4px;
     }
     .portal-card-sub {
@@ -300,8 +341,8 @@
        style="font-family:'Noto Sans TC','PingFang TC',sans-serif; overflow:visible;">
     <defs>
       <linearGradient id="in-bg" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%"   stop-color="#0d1e38"/>
-        <stop offset="100%" stop-color="#060f1e"/>
+        <stop offset="0%"   stop-color="#eef7fc"/>
+        <stop offset="100%" stop-color="#cfe3f0"/>
       </linearGradient>
       <filter id="in-glow" x="-50%" y="-50%" width="200%" height="200%">
         <feGaussianBlur stdDeviation="7" result="b"/>
@@ -356,8 +397,8 @@
       <!-- ── Screen nav bar ── -->
       <rect x="648" y="375" width="144" height="3.5" fill="#071020"/>
       <text x="720" y="377.5" text-anchor="middle"
-            fill="rgba(0,170,255,0.6)" font-size="1.1" letter-spacing="0.25" font-weight="700">
-        台灣海底電纜
+            fill="rgba(0,170,255,0.6)" font-size="1.0" letter-spacing="0.15" font-weight="700">
+        台灣數位生命線：海底電纜
       </text>
 
       <!-- ═══════════════════════════════════════════════════
@@ -371,35 +412,24 @@
            y=507  → viewport y = 520+(507-520)×9 = 403  ← desc 2
            y=548  → viewport y = 520+(548-520)×9 = 772  ← scroll hint
       ════════════════════════════════════════════════════════ -->
-      <text x="720" y="477" text-anchor="middle"
-            fill="white" font-size="5.3" font-weight="700" letter-spacing="0.6">
-        台灣海底電纜
-      </text>
-      <text x="720" y="490" text-anchor="middle"
-            fill="rgba(0,170,255,0.65)" font-size="1.44" letter-spacing="0.5">
-        TAIWAN SUBMARINE CABLES
+      <text x="720" y="478" text-anchor="middle"
+            fill="white" font-size="4.3" font-weight="700" letter-spacing="0.4">
+        台灣數位生命線：海底電纜
       </text>
       <!-- Cyan divider -->
-      <line x1="700" y1="494" x2="740" y2="494"
+      <line x1="700" y1="490" x2="740" y2="490"
             stroke="rgba(0,170,255,0.35)" stroke-width="0.2"/>
-      <text x="720" y="500" text-anchor="middle"
-            fill="rgba(170,205,240,0.55)" font-size="1.44">
-        一條比花園水管還細的電纜，
+      <text x="720" y="499" text-anchor="middle"
+            fill="rgba(170,205,240,0.6)" font-size="1.44">
+        25 條通訊海纜，
       </text>
-      <text x="720" y="506" text-anchor="middle"
-            fill="rgba(170,205,240,0.55)" font-size="1.44">
-        承載了台灣 95% 的對外網路流量。
+      <text x="720" y="505" text-anchor="middle"
+            fill="rgba(170,205,240,0.6)" font-size="1.44">
+        是臺灣對內對外的重要通訊管道，
       </text>
-      <text x="720" y="514" text-anchor="middle"
-            fill="rgba(130,175,220,0.38)" font-size="1.2" letter-spacing="0.1">
-        往下滑，探索它的真實面貌。
-      </text>
-      <!-- Scroll hint arrow -->
-      <line x1="720" y1="528" x2="720" y2="536"
-            stroke="rgba(0,170,255,0.3)" stroke-width="0.3"/>
-      <text x="720" y="548" text-anchor="middle"
-            fill="rgba(0,170,255,0.28)" font-size="1.1" letter-spacing="0.22">
-        scroll
+      <text x="720" y="511" text-anchor="middle"
+            fill="rgba(170,205,240,0.6)" font-size="1.44">
+        乘載了 99% 的網路流量
       </text>
 
       <!-- Decorative: mini cable XS rings (visible at both scales) -->
@@ -435,25 +465,21 @@
   </svg>
   <!-- Caption panels — appear in sequence to progressively introduce submarine cables -->
   <div class="panel intro-panel" id="icap1">
-    <div class="badge">01 · WI-FI</div>
-    <h2>你的網路訊號<br>從哪裡來？</h2>
+    <h2>網路訊號<br>從哪裡來？</h2>
     <div class="div"></div>
     <p>手機上的 Wi-Fi，把資料送到附近的基地台。</p>
-    <p>但這只是整段旅程的<strong>第一站</strong>。</p>
+    <p>這只是整段旅程的<strong>第一站</strong>。</p>
   </div>
   <div class="panel intro-panel" id="icap2">
-    <div class="badge">02 · 訊號變成光</div>
-    <h2>下一段，訊號<br>會潛入海裡</h2>
+    <h2>接下來，訊號<br>會潛入海裡</h2>
     <div class="div"></div>
     <p>電訊號被轉成雷射光，鑽進比頭髮還細的<strong>玻璃光纖</strong>。</p>
     <p>沿著光纖跨越整片海洋，連到地球另一端的伺服器。</p>
   </div>
   <div class="panel intro-panel" id="icap3">
-    <div class="badge">03 · 海底電纜</div>
     <h2>橫跨海洋的<br>網路命脈</h2>
     <div class="div"></div>
-    <p>這條比花園水管還細的電纜，承載全球 <strong>95%</strong> 的國際網路流量。</p>
-    <p>往下滑，看它的真實面貌。</p>
+    <p>這些跟花園水管差不多粗的電纜，承載全球超過 <strong>99%</strong> 的網路流量。</p>
   </div>
 </div>
 
@@ -824,8 +850,7 @@
 <!-- ── UI chrome ── -->
 <div id="ui">
   <div id="header">
-    <h1>台灣海底電纜</h1>
-    <p>Taiwan Submarine Cables</p>
+    <h1>台灣數位生命線：海底電纜</h1>
   </div>
   <div id="dots">
     <div class="dot on"  data-i="0" title="電纜剖面"></div>
@@ -838,83 +863,72 @@
 
   <!-- Panels (only for 3D stages) -->
   <div class="panel" id="p0">
-    <div class="badge">03 · 電纜剖面 Cross-Section</div>
     <h2>電纜的<br>內部結構</h2>
     <div class="div"></div>
-    <p>海底電纜外觀與水管相仿，但內部是精密的多層工程，承載全球 <strong>95%</strong> 的國際網路流量。</p>
+    <p>比頭髮還細的玻璃光纖，被一層層不同材質的素材包起，因應不同深度有不同的厚度——深海段直徑約 2 公分，近岸鎧裝段約 5 公分。</p>
     <div class="layers">
-      <div class="lr"><span class="sw" style="background:#00ccff"></span><span class="ln">光纖束</span><span class="ld">傳輸訊號，可達數 Tbps</span></div>
-      <div class="lr"><span class="sw" style="background:#ffaa00"></span><span class="ln">銅導體</span><span class="ld">傳送電力給中繼器</span></div>
-      <div class="lr"><span class="sw" style="background:#334466"></span><span class="ln">絕緣層</span><span class="ld">高壓聚乙烯絕緣</span></div>
-      <div class="lr"><span class="sw" style="background:#8899bb"></span><span class="ln">鋼鎧裝甲</span><span class="ld">高張力鋼絲，抗磨耐壓</span></div>
-      <div class="lr"><span class="sw" style="background:#223344"></span><span class="ln">防蝕層</span><span class="ld">防止海水腐蝕</span></div>
-      <div class="lr"><span class="sw" style="background:#0d1520"></span><span class="ln">PE 護套</span><span class="ld">外層聚乙烯保護鞘</span></div>
+      <div class="lr"><span class="sw" style="background:#00ccff"></span><span class="ln">光纖束</span><span class="ld">訊號的核心</span></div>
+      <div class="lr"><span class="sw" style="background:#8aa0b8"></span><span class="ln">鋼絲</span><span class="ld">抗張力強度層</span></div>
+      <div class="lr"><span class="sw" style="background:#d98a3a"></span><span class="ln">銅鞘</span><span class="ld">導體，供電給中繼器</span></div>
+      <div class="lr"><span class="sw" style="background:#1a2233"></span><span class="ln">PE 護套</span><span class="ld">聚乙烯絕緣與外層保護</span></div>
+      <div class="lr"><span class="sw" style="background:#6b7480"></span><span class="ln">鎧裝＋紗線</span><span class="ld">近岸段才加的外層防護</span></div>
     </div>
   </div>
 
   <div class="panel" id="p1">
-    <div class="badge">04 · 淺海埋設 Shallow Burial</div>
     <h2>近岸區段：<br>挖溝深埋</h2>
     <div class="div"></div>
-    <p>水深在 <strong>1,000 公尺以內</strong>的近岸區段，電纜會被埋進海床下方約 1–3 公尺深。</p>
-    <p>主要為了避開<strong>漁網、船錨與底拖網</strong>，防止人為意外勾斷。</p>
-    <p>近年中國抽砂船在台灣近海大規模盜採海砂，導致原本埋好的電纜<strong>裸露於海床</strong>，更容易被勾損或惡意切斷。</p>
+    <p>水深約 <strong>1,500 公尺以內</strong>的近岸區段，電纜會以海底犁具埋進海床下約 1 公尺，高風險海域最深可達 3 公尺。</p>
+    <p>主要為了避開<strong>漁網、船錨與底拖網</strong>——全球每年海纜損壞，七成以上來自這類人為活動。</p>
+    <p>近年中國抽砂船在馬祖海域大規模盜採海砂，海床被掏空，讓原本埋好的電纜<strong>裸露於海床</strong>，更容易被勾損或惡意切斷。</p>
   </div>
 
   <div class="panel" id="p2">
-    <div class="badge">05 · 深海裸放 Deep Sea Placement</div>
     <h2>深海區段：<br>直接平放海床</h2>
     <div class="div"></div>
-    <p>水深超過 1,000 公尺後，外力風險大幅降低，電纜<strong>裸置</strong>於海床上。</p>
-    <p>在最深近 8,000 公尺的海域，需承受約 <strong>800 大氣壓</strong>、近 2°C 的低溫。</p>
+    <p>水深超過約 1,500 公尺後，外力風險大幅降低，電纜<strong>裸置</strong>於海床上。</p>
+    <p>台灣東部一出海就是深海盆（花東海盆／西菲律賓海盆），最深約 <strong>6,000 公尺</strong>，電纜在此需承受約 <strong>600 大氣壓</strong>、1–4°C 的低溫。</p>
   </div>
 
   <div class="panel" id="p3">
-    <div class="badge">06 · 登陸站 Cable Landing Station</div>
     <h2>電纜登陸站：<br>海底與陸地的交匯</h2>
     <div class="div"></div>
-    <p>海底電纜在進入海洋前，必須經過「電纜登陸站」（CLS）。這棟建築內有訊號中繼設備、電纜監控系統與電力饋送裝置，是陸地網路與海洋的接點。</p>
-    <p>台灣本島共有 <strong>4 座</strong>主要登陸站：<strong>頭城（宜蘭）</strong>、<strong>八里（新北）</strong>、<strong>淡水（新北）</strong> 及 <strong>枋山（屏東）</strong>。</p>
+    <p>海底電纜透過「電纜登陸站」與陸地接壤。這棟建築內有訊號中繼設備、電纜監控系統與電力饋送裝置。</p>
+    <p>台灣本島的登陸點集中在 <strong>4 個地點</strong>：頭城（宜蘭）、八里（新北）、淡水（新北）及枋山（屏東），以及 Google 新設 TPU 海纜建立的<strong>台東大武</strong>登陸站。</p>
   </div>
 
   <div class="panel" id="p4">
-    <div class="badge">07 · 台灣版圖 Taiwan's Cable Map</div>
     <h2>台灣的海底<br>電纜版圖</h2>
     <div class="div"></div>
-    <p>台灣作為半導體與雲端服務的關鍵節點，現有 <strong>十多條</strong>對外海底電纜分別由 4 座登陸站接入，形成備援網路架構。</p>
-    <div class="tags">
-      <span class="tag">APG</span><span class="tag">APCN-2</span>
-      <span class="tag">APRICOT</span><span class="tag">C2C</span>
-      <span class="tag">EAC-1</span><span class="tag">EAC-2</span>
-      <span class="tag">FASTER</span><span class="tag">NCP</span>
-      <span class="tag">PLCN</span><span class="tag">SJC2</span>
-      <span class="tag">TOPAZ</span><span class="tag">TPE</span>
-    </div>
+    <p>台灣作為半導體與雲端服務的關鍵節點，現有約 <strong>15 條</strong>國際海纜由 5 個登陸地點接入，另有約 10 條連接離島的國內海纜，形成備援網路架構。</p>
   </div>
 
   <div class="panel" id="p5">
-    <div class="badge">08 · 全球視野 Global Network</div>
     <h2>台灣連接世界的<br>數位生命線</h2>
     <div class="div"></div>
     <p>台灣的海底電纜延伸至日本、美國、菲律賓、香港與東南亞，是台灣對外通訊的命脈。</p>
-    <div class="stat-row">
-      <div class="stat"><div class="stat-n">12<span style="font-size:14px">+</span></div><div class="stat-l">對外電纜條數</div></div>
-      <div class="stat"><div class="stat-n">95<span style="font-size:14px">%</span></div><div class="stat-l">國際流量依賴</div></div>
-      <div class="stat"><div class="stat-n">4</div><div class="stat-l">主要登陸站</div></div>
-      <div class="stat"><div class="stat-n" style="font-size:16px">8,000m</div><div class="stat-l">最大鋪設深度</div></div>
-    </div>
   </div>
 
   <div id="scroll-hint">
     <span>scroll</span>
     <div class="arr"></div>
   </div>
+
+  <!-- 深度標尺：淺海→深海下潛時顯示，標出 1,500m 的埋設↔裸放分界 -->
+  <div id="depth-gauge">
+    <div class="dg-track"></div>
+    <div class="dg-cursor" id="dgCursor"></div>
+    <div class="dg-mark" style="top:8%"><b>0 m</b><small>海面</small></div>
+    <div class="dg-mark dg-boundary" id="dgBoundary" style="top:42%"><b>1,500 m</b><em>埋設 ↔ 裸放</em></div>
+    <div class="dg-mark" style="top:92%"><b>~6,000 m</b><small>深海帶</small></div>
+  </div>
 </div>
 
 <!-- Scroll proxy -->
 <div id="proxy">
   <div id="s-intro" style="height:400vh;"></div><!-- intro (2D) -->
-  <div class="sec" id="s0"></div><!-- cable XS (3D) -->
+  <div id="s0a" style="height:260vh;"></div><!-- cable XS build-up: fibre → layers wrap on (3D) -->
+  <div class="sec" id="s0"></div><!-- cable XS full view (3D) -->
   <div class="sec" id="s1"></div><!-- shallow burial (2D) -->
   <div class="sec" id="s2"></div><!-- deep sea (2D) -->
   <div class="sec" id="s3"></div><!-- landing station (3D) -->
@@ -928,39 +942,44 @@
 ═══════════════════════════════════════════ -->
 <section id="articles">
   <div class="articles-intro">
-    <p class="articles-eyebrow">DEEPER · 三個切角</p>
-    <h2 class="articles-headline">看見海纜，只是開始。</h2>
-    <p class="articles-lead">這個互動專題只是一份入門地圖。下面三篇文章，分別從<strong style="color:#c8d4e4">「我們怎麼認知」、「系統有多脆」、「該怎麼準備」</strong>三個切角，把海纜韌性這個議題拉得更深一些。</p>
+    <h2 class="articles-headline">我們應該如何準備網路韌性風險？</h2>
+    <p class="articles-lead">從<strong style="color:#14304a">「我們怎麼認知」、「系統有多脆弱」、「該怎麼準備」、「如何自行觀測」</strong>四個切角來看見。</p>
   </div>
 
   <div class="articles-grid">
-    <a href="#" class="article-card" data-status="draft">
+    <a href="#" class="article-card" data-status="tentative">
       <div class="article-card-top">
         <span class="article-num">01</span>
-        <span class="article-tag">DRAFT</span>
       </div>
-      <h3>台灣與海底電纜：<br>被忽視的命脈</h3>
-      <p class="article-card-sub">認知現況 · Recognition</p>
+      <h3>（暫定）台灣與海底電纜：<br>被忽視的命脈</h3>
+      <p class="article-card-sub">認知現況</p>
       <span class="article-arrow">→</span>
     </a>
 
-    <a href="#" class="article-card" data-status="draft">
+    <a href="#" class="article-card" data-status="tentative">
       <div class="article-card-top">
         <span class="article-num">02</span>
-        <span class="article-tag">DRAFT</span>
       </div>
-      <h3>當電纜斷裂，<br>哪些 App 還能用？</h3>
-      <p class="article-card-sub">韌性檢測 · ZeroFlare Test</p>
+      <h3>（暫定）當電纜斷裂，<br>哪些 App 還能用？</h3>
+      <p class="article-card-sub">韌性檢測</p>
       <span class="article-arrow">→</span>
     </a>
 
-    <a href="#" class="article-card" data-status="draft">
+    <a href="#" class="article-card" data-status="tentative">
       <div class="article-card-top">
         <span class="article-num">03</span>
-        <span class="article-tag">DRAFT</span>
       </div>
-      <h3>我們如何準備<br>「沒有網路」的災難？</h3>
-      <p class="article-card-sub">災害準備 · Preparedness</p>
+      <h3>（暫定）我們如何準備<br>「沒有網路」的災難？</h3>
+      <p class="article-card-sub">災害準備</p>
+      <span class="article-arrow">→</span>
+    </a>
+
+    <a href="#" class="article-card" data-status="tentative">
+      <div class="article-card-top">
+        <span class="article-num">04</span>
+      </div>
+      <h3>（暫定）民間海纜狀況<br>觀測方法</h3>
+      <p class="article-card-sub">公民觀測</p>
       <span class="article-arrow">→</span>
     </a>
   </div>
@@ -972,19 +991,17 @@
 <section id="portals">
   <div class="portals-inner">
     <header class="portals-header">
-      <p class="portals-eyebrow">CONTINUE · 不同的入口</p>
-      <h2 class="portals-title">想再走深一點？</h2>
-      <p class="portals-lead">這個專題只是切入點。下面是與台灣海纜韌性、災難準備相關的其他研究、地圖與工具，由不同團隊維護。</p>
+      <h2 class="portals-title">更多內容</h2>
+      <p class="portals-lead">與台灣海纜韌性相關的其他工具：</p>
     </header>
     <div class="portals-grid">
-      <a href="https://crcolab.art/" class="portal-card" target="_blank" rel="noopener noreferrer">
+      <a href="https://srtt.ocf.tw/" class="portal-card" target="_blank" rel="noopener noreferrer">
         <div class="portal-card-top">
           <span class="portal-num">01</span>
-          <span class="portal-domain">crcolab.art ↗</span>
+          <span class="portal-domain">srtt.ocf.tw ↗</span>
         </div>
-        <h3>Cyborg Resilience Co-lab</h3>
-        <p class="portal-card-sub">CRC · 賽博格韌性協作研究室</p>
-        <p class="portal-card-desc">連結研究、實作與藝術，在戰爭、災難與科技風險交疊的當代情境中探索數位韌性。由跨領域的數位人權工作者、人類學家、藝術家、工程師共同營運。</p>
+        <h3>數位服務韌性檢測工具 SRTT</h3>
+        <p class="portal-card-desc">開放文化基金會（OCF）開發的線上工具，用來檢測數位服務在對外連線受阻（例如海纜中斷、極度壅塞）情境下的韌性。</p>
         <span class="portal-arrow">→</span>
       </a>
 
@@ -994,8 +1011,17 @@
           <span class="portal-domain">smc.peering.tw ↗</span>
         </div>
         <h3>台灣海纜動態地圖</h3>
-        <p class="portal-card-sub">Taiwan Submarine Cable Dynamic Map</p>
-        <p class="portal-card-desc">互動式地圖呈現連接台灣的海底電纜路徑、登陸點，並收錄歷年斷線事件記錄。本專題的電纜清單與登陸站資料即參考此地圖。</p>
+        <p class="portal-card-desc">互動式地圖即時呈現連接台灣的海纜系統、登陸點，並收錄歷年斷線事件記錄。</p>
+        <span class="portal-arrow">→</span>
+      </a>
+
+      <a href="https://resilience.ocf.tw/web/" class="portal-card" target="_blank" rel="noopener noreferrer">
+        <div class="portal-card-top">
+          <span class="portal-num">03</span>
+          <span class="portal-domain">resilience.ocf.tw ↗</span>
+        </div>
+        <h3>海纜斷掉時，台灣人常用的網站會動嗎？</h3>
+        <p class="portal-card-desc">檢測 1,859 個台灣常用網站：在海纜斷光或極度壅塞時，約 47% 可能打不開、42% 風險偏高，僅 11% 較有韌性。可輸入任一網址查看結果。</p>
         <span class="portal-arrow">→</span>
       </a>
     </div>
@@ -1006,25 +1032,32 @@
 import * as THREE from 'three';
 
 // ── Renderer ──────────────────────────────────────
+// ── 淺色水感主題（要再調色改這裡就好）──
+const THEME = {
+  bg:  0xe7f3fa,   // 底色 / clear color（淡藍白）
+  fog: 0xcfe6f2,   // 水中霧色（遠處淡化成亮水藍）
+};
+
 const canvas = document.getElementById('webgl');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias:true });
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-renderer.setClearColor(0x0d1e38, 1);
+renderer.setClearColor(THEME.bg, 1);
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.15;
+renderer.toneMappingExposure = 1.1;
 
 const scene = new THREE.Scene();
-scene.fog = new THREE.FogExp2(0x0d1e38, 0.012);
+scene.fog = new THREE.FogExp2(THEME.fog, 0.012);
 
 const camera = new THREE.PerspectiveCamera(55, 16/9, 0.1, 1200);
 
 // ── Lights ──────────────────────────────────────
-scene.add(new THREE.AmbientLight(0x102040, 4));
+scene.add(new THREE.AmbientLight(0xaecfe2, 2.4)); // 亮藍白環境光（淺色主題：整體提亮）
+scene.add(new THREE.HemisphereLight(0xeaf6ff, 0x8fa6b4, 1.1)); // 天空亮、海床稍暗的半球光
 
-const sun = new THREE.DirectionalLight(0xffd090, 2);
+const sun = new THREE.DirectionalLight(0xfff0d8, 2);
 sun.position.set(30, 60, 20); scene.add(sun);
 
-const rim = new THREE.DirectionalLight(0x0055ff, 0.7);
+const rim = new THREE.DirectionalLight(0x4aa0ff, 0.6);
 rim.position.set(-30, 10, -30); scene.add(rim);
 
 const seaGlow = new THREE.PointLight(0x003388, 3, 60);
@@ -1041,14 +1074,14 @@ for (let i=0; i<fPos.count; i++) {
   fPos.setY(i, Math.sin(fPos.getX(i)*.18)*Math.cos(fPos.getY(i)*.12)*0.3 - 14);
 }
 floorGeo.computeVertexNormals();
-const floor = new THREE.Mesh(floorGeo, new THREE.MeshStandardMaterial({ color:0x080e18, roughness:.95 }));
+const floor = new THREE.Mesh(floorGeo, new THREE.MeshStandardMaterial({ color:0x9bb0bd, roughness:.95 }));
 floor.rotation.x = -Math.PI/2; scene.add(floor);
 
 // ── Ocean surface ─────────────────────────────────
 const oceanGeo = new THREE.PlaneGeometry(400, 400, 100, 100);
 const origY = Float32Array.from(oceanGeo.attributes.position.array);
 const ocean = new THREE.Mesh(oceanGeo,
-  new THREE.MeshStandardMaterial({ color:0x0d2a4a, transparent:true, opacity:.82, roughness:.07, metalness:.88, side:THREE.DoubleSide }));
+  new THREE.MeshStandardMaterial({ color:0x6fb6dd, transparent:true, opacity:.55, roughness:.18, metalness:.45, side:THREE.DoubleSide }));
 ocean.rotation.x = -Math.PI/2; ocean.position.y = 0.3; scene.add(ocean);
 
 // ── Taiwan island ─────────────────────────────────
@@ -1109,6 +1142,7 @@ const LANDINGS = {
   bali:     {x:  2.20, z: -9.10}, // 八里 (25.16°N, 121.41°E) N coast
   tamsui:   {x:  1.80, z: -8.80}, // 淡水 (25.17°N, 121.41°E) — adjacent to 八里
   fangshan: {x: -1.80, z:  7.00}, // 枋山 (22.24°N, 120.66°E) SW
+  dawu:     {x: -0.60, z:  7.20}, // 大武 (22.34°N, 120.90°E) SE — Google TPU, 2026
 };
 Object.values(LANDINGS).forEach(({x:wx,z:wz})=>{
   const bld=new THREE.Mesh(new THREE.BoxGeometry(.7,.9,.7),new THREE.MeshStandardMaterial({color:0x7799bb,roughness:.4,metalness:.3}));
@@ -1123,28 +1157,29 @@ Object.values(LANDINGS).forEach(({x:wx,z:wz})=>{
   sand.rotation.x=-Math.PI/2; sand.position.set(wx,.31,wz); scene.add(sand);
 });
 
-// ── Submarine cables (12 active international cables landing in Taiwan) ──
+// ── Submarine cables (international cables landing in Taiwan, per TeleGeography 2026) ──
 // `to` coords are approximate scene positions of each cable's primary distant
 // landing point. Trans-Pacific routes (US/Canada) are spread by small offsets
 // so parallel cables don't overlap. Colours grouped by region:
 //   cyan/teal  → SE/E Asia,  orange → SE Asia tropics,  purple → US/Canada.
 const endSpheres=[];
+const cableCurves=[]; // 全部實體曲線——剖面段會「嵌回」離它最近的那條
 [
   // East / Southeast Asia
   {name:'APG',     from:'toucheng', to:[-65,  93], color:0x00ccff}, // → Singapore
-  {name:'APCN-2',  from:'fangshan', to:[-28,  10], color:0x00aacc}, // → Hong Kong
-  {name:'C2C',     from:'bali',     to:[ 75, -45], color:0x00ddff}, // → Japan
-  {name:'EAC-1',   from:'bali',     to:[ 25, -52], color:0x00aaff}, // → Korea
-  {name:'EAC-2',   from:'bali',     to:[-25,   8], color:0x0088dd}, // → Hong Kong
-  {name:'SJC2',    from:'toucheng', to:[-70,  88], color:0x00ccaa}, // → Singapore
-  {name:'APRICOT', from:'toucheng', to:[-55, 120], color:0xff7700}, // → Indonesia
+  {name:'APCN-2',  from:'tamsui',   to:[-28,  10], color:0x00aacc}, // → Hong Kong
+  {name:'EAC-C2C', from:'bali',     to:[ 75, -45], color:0x00ddff}, // → Japan (Telstra 合併系統，淡水/八里/枋山多點登陸)
+  {name:'FNAL',    from:'toucheng', to:[ 70, -50], color:0x00aaff}, // → Japan (FLAG North Asia Loop)
+  {name:'TSE-1',   from:'tamsui',   to:[-20, -14], color:0x0088dd}, // → 福州 (台灣海峽一號)
+  {name:'SJC2',    from:'tamsui',   to:[-70,  88], color:0x00ccaa}, // → Singapore (淡水＋枋山雙登陸)
+  {name:'APRICOT', from:'toucheng', to:[-55, 120], color:0xff7700}, // → Indonesia (2025 啟用)
+  {name:'TPU',     from:'dawu',     to:[ 80,  55], color:0xffaa33}, // → Guam/US (Google, 2026, 台東大武)
   // Trans-Pacific (slightly offset endpoints to fan out visually)
-  {name:'FASTER',  from:'toucheng', to:[148, -78], color:0x9966ff}, // → US Oregon
+  {name:'FASTER',  from:'tamsui',   to:[148, -78], color:0x9966ff}, // → US Oregon
   {name:'NCP',     from:'toucheng', to:[152, -82], color:0xaa77ff}, // → US Oregon
-  {name:'PLCN',    from:'toucheng', to:[145, -38], color:0xcc88ff}, // → US LA
-  {name:'TOPAZ',   from:'toucheng', to:[142,-108], color:0x6688ff}, // → Canada (Vancouver)
+  {name:'PLCN',    from:'toucheng', to:[145, -38], color:0xcc88ff}, // → US LA (台灣/菲律賓分支運作中)
   {name:'TPE',     from:'tamsui',   to:[150, -75], color:0xff66cc}, // → US Oregon
-].forEach(({from,to,color})=>{
+].forEach(({name,from,to,color})=>{
   const station=LANDINGS[from];
   const fx=station.x, fz=station.z;
   const [tx,tz]=to;
@@ -1157,6 +1192,7 @@ const endSpheres=[];
     new THREE.Vector3(tx,-3,tz),
   ];
   const curve=new THREE.CatmullRomCurve3(pts);
+  cableCurves.push(curve);
   scene.add(new THREE.Mesh(new THREE.TubeGeometry(curve,100,.06,6,false),
     new THREE.MeshStandardMaterial({color,emissive:color,emissiveIntensity:.6,roughness:.3,metalness:.7})));
   scene.add(new THREE.Mesh(new THREE.TubeGeometry(curve,100,.14,6,false),
@@ -1166,47 +1202,244 @@ const endSpheres=[];
   end.position.set(tx,-3,tz); scene.add(end); endSpheres.push(end);
 });
 
-// ── Cross-section model (at world 16,-4,-22, camera faces it head-on) ──
-const xsGroup = new THREE.Group();
-xsGroup.position.set(16,-4,-22);
+// ════════════════════════════════════════════════════════════
+//  淺海埋設 / 深海裸放 —— 3D dioramas（取代原本蓋在 stage 1、2 的 2D SVG）
+//  兩段都是自成一格的小場景，鏡頭轉過去框住。深度／水壓／埋深等
+//  數字一律留在左側 p1 / p2 白色面板，3D 只負責畫面。
+// ════════════════════════════════════════════════════════════
 
-// Cable body
-const cableBody=new THREE.Mesh(new THREE.CylinderGeometry(1.05,1.05,5,32),
-  new THREE.MeshStandardMaterial({color:0x0a0e18,roughness:.4,metalness:.5}));
-cableBody.rotation.x=Math.PI/2; cableBody.position.z=-2.5; xsGroup.add(cableBody);
+// 多層皮的海纜短段（沿 +x 走向）。outer 帶一點冷光，讓深海裡也看得到。
+function makeCableSegment(len, radius){
+  const g=new THREE.Group();
+  const layers=[
+    {r:radius,      c:0x2a3848, e:0x12303f, ei:.5,  rough:.55,metal:.35}, // PE 外皮（藍灰，看得見）
+    {r:radius*0.70, c:0x6a8298, e:0x1c2e40, ei:.5,  rough:.35,metal:.6 }, // 鋼鎧裝（亮銀）
+    {r:radius*0.42, c:0x1f8ad8, e:0x0a4a80, ei:.8,  rough:.35,metal:.65}, // 絕緣／銅導體
+    {r:radius*0.18, c:0x7ce6ff, e:0x7ce6ff, ei:2.0, rough:.3, metal:.3 }, // 光纖芯（發光）
+  ];
+  layers.forEach(({r,c,e,ei,rough,metal})=>{
+    const m=new THREE.Mesh(new THREE.CylinderGeometry(r,r,len,18,1),
+      new THREE.MeshStandardMaterial({color:c,emissive:e,emissiveIntensity:ei,roughness:rough,metalness:metal}));
+    m.rotation.z=Math.PI/2; g.add(m); // y軸圓柱轉成沿 x
+  });
+  return g;
+}
 
-// Concentric rings (innerR, outerR, color, emissive)
-[
-  [0,   .18,  0x00ccff, 0x004466],
-  [.18, .31,  0xffaa00, 0x662200],
-  [.31, .50,  0x223344, 0],
-  [.50, .68,  0x7799bb, 0x223344],
-  [.68, .82,  0x1a2233, 0],
-  [.82, 1.0,  0x060a12, 0],
-].forEach(([inn,out,color,emissive],i)=>{
-  const geo=inn===0?new THREE.CircleGeometry(out,48):new THREE.RingGeometry(inn,out,48);
-  const m=new THREE.Mesh(geo,new THREE.MeshStandardMaterial({color,emissive,emissiveIntensity:.8,side:THREE.DoubleSide}));
-  m.position.z=i*.006; xsGroup.add(m);
+// ───────── 淺海埋設 diorama ─────────
+// 一塊分層海床的「切面」：海面下淺水、海床表面，電纜埋在表面下約 1m 的溝裡；
+// 海面上一艘鋪纜船，正把電纜放下去埋。
+const shallowGroup=new THREE.Group();
+const SH=new THREE.Vector3(6,0,-52);            // 場景中心（世界座標）
+shallowGroup.position.copy(SH);
+scene.add(shallowGroup);
+
+// 海床塊（暖棕土，提亮到看得清楚）；前面 +z 那一面當切面給鏡頭看
+const shBed=new THREE.Mesh(new THREE.BoxGeometry(30,8,18),
+  new THREE.MeshStandardMaterial({color:0x4a3a24,roughness:1}));
+shBed.position.set(0,-9,0);                     // 頂面 y=-5
+shallowGroup.add(shBed);
+// 切面上的地層條（砂→黏土→硬底→基岩，由淺到深；只給視覺，不標字）
+[{y:-5.7,c:0x6a5236},{y:-7.1,c:0x55402a},{y:-8.7,c:0x42301e},{y:-10.8,c:0x322414}]
+  .forEach(({y,c})=>{
+    const s=new THREE.Mesh(new THREE.PlaneGeometry(30,1.35),
+      new THREE.MeshStandardMaterial({color:c,roughness:1}));
+    s.position.set(0,y,9.02); shallowGroup.add(s);
+  });
+// 海床頂面薄薄一層較亮的砂，界定「表面」
+const shTop=new THREE.Mesh(new THREE.PlaneGeometry(30,18),
+  new THREE.MeshStandardMaterial({color:0x6e5638,roughness:1}));
+shTop.rotation.x=-Math.PI/2; shTop.position.set(0,-4.99,0); shallowGroup.add(shTop);
+
+// 埋在溝裡的電纜：貼在切面上、位於表面(-5)下方約 1（埋深~1m）
+// 從海底犁後方(x≈-13)往右拖出、已經埋好
+const shCable=makeCableSegment(26,0.6);
+shCable.position.set(8,-6.0,9); shallowGroup.add(shCable);
+// 回填的砂土蓋在電纜上方（半透明，看得到底下纜線＝已埋好）
+const shFill=new THREE.Mesh(new THREE.BoxGeometry(7,1.0,0.6),
+  new THREE.MeshStandardMaterial({color:0x52401f,roughness:1,transparent:true,opacity:0.7}));
+shFill.position.set(0,-5.35,9.1); shallowGroup.add(shFill);
+
+// （海面由全域 ocean 平面提供，這裡不再另加，避免 z-fighting）
+
+// ── 鋪纜船（簡化，停在海面上）──
+const ship=new THREE.Group();
+const hull=new THREE.Mesh(new THREE.BoxGeometry(6,1.1,1.9),
+  new THREE.MeshStandardMaterial({color:0x223445,roughness:.5,metalness:.4}));
+hull.position.y=0.45; ship.add(hull);
+const bow=new THREE.Mesh(new THREE.ConeGeometry(0.95,1.7,4),
+  new THREE.MeshStandardMaterial({color:0x1c2b3a,roughness:.5,metalness:.4}));
+bow.rotation.z=-Math.PI/2; bow.rotation.y=Math.PI/4; bow.position.set(3.4,0.45,0); ship.add(bow);
+const house=new THREE.Mesh(new THREE.BoxGeometry(2,1.1,1.5),
+  new THREE.MeshStandardMaterial({color:0x2e4156,roughness:.4,metalness:.3}));
+house.position.set(-1.2,1.4,0); ship.add(house);
+const win=new THREE.Mesh(new THREE.BoxGeometry(2.06,0.32,1.55),
+  new THREE.MeshStandardMaterial({color:0xffd070,emissive:0xffd070,emissiveIntensity:1.1}));
+win.position.set(-1.2,1.55,0); ship.add(win);
+const sheave=new THREE.Mesh(new THREE.TorusGeometry(0.5,0.12,8,18),
+  new THREE.MeshStandardMaterial({color:0x00aaff,emissive:0x0099dd,emissiveIntensity:1.2}));
+sheave.position.set(2.5,1.1,0); ship.add(sheave);
+ship.position.set(-1,0,11);                     // 海面、切面前方（拖著海底犁）
+shallowGroup.add(ship);
+
+// ── 海底犁（sea plough）：船拖著它，一邊犁開海床、一邊把電纜埋進去 ──
+// 這是這艘船的「工作」：有了它，船→犁→溝→埋好的電纜 才讀得成一個施工過程。
+const plough=new THREE.Group();
+const steel=c=>new THREE.MeshStandardMaterial({color:c,roughness:.5,metalness:.6});
+const chassis=new THREE.Mesh(new THREE.BoxGeometry(2.6,0.55,1.3),steel(0x707d8a));
+plough.add(chassis);
+[-0.5,0.5].forEach(z=>{ const s=new THREE.Mesh(new THREE.BoxGeometry(2.9,0.18,0.22),steel(0x515e6a));
+  s.position.set(0,-0.4,z); plough.add(s); });            // 滑橇 runners
+const mast=new THREE.Mesh(new THREE.BoxGeometry(0.2,1.5,0.2),steel(0x7c8995));
+mast.position.set(0.75,0.95,0); mast.rotation.z=0.5; plough.add(mast); // 拖點桅桿
+const share=new THREE.Mesh(new THREE.ConeGeometry(0.42,1.7,4),
+  new THREE.MeshStandardMaterial({color:0xd06a1e,roughness:.55,metalness:.4}));
+share.position.set(-0.55,-1.05,0); share.rotation.x=Math.PI; plough.add(share); // 犁刀切入海床（橘色）
+const chute=new THREE.Mesh(new THREE.BoxGeometry(0.55,0.7,0.45),steel(0x5c6975));
+chute.position.set(1.05,-0.25,0); plough.add(chute);      // 後方下纜槽
+plough.position.set(-5,-4.75,9);                           // 坐在海床表面(-5)上、犁刀往下切
+shallowGroup.add(plough);
+
+// 鋪設中的纜線：從船的滑輪 catenary 垂下，接到海底犁的桅桿頂（再由犁埋入海床）
+const layCurve=new THREE.CatmullRomCurve3([
+  new THREE.Vector3(1.5,1.1,11),
+  new THREE.Vector3(-1.5,-1.5,10),
+  new THREE.Vector3(-3.6,-3.0,9.3),
+  new THREE.Vector3(-4.2,-3.4,9),                          // 犁桅頂
+]);
+shallowGroup.add(new THREE.Mesh(new THREE.TubeGeometry(layCurve,48,0.16,8,false),
+  new THREE.MeshStandardMaterial({color:0x2a3848,emissive:0x12303f,emissiveIntensity:.3,roughness:.7})));
+
+// 淺海段冷光點光（打亮切面與纜線）
+const shLight=new THREE.PointLight(0x8ad4ff,6,52);
+shLight.position.set(SH.x,SH.y+4,SH.z+13); scene.add(shLight);
+const shFill2=new THREE.PointLight(0xfff0d0,2.5,46); // 暖一點的補光（淺＝有陽光）
+shFill2.position.set(SH.x-6,SH.y+9,SH.z+12); scene.add(shFill2);
+
+// ───────── 深海裸放 diorama ─────────
+// 漆黑海床上，一條電纜「裸置」直接躺著（無埋設）；海雪緩緩飄落。
+const deepGroup=new THREE.Group();
+const DP=new THREE.Vector3(-16,-30,-46);        // 沉到深海（鏡頭從淺海一路往下潛）
+deepGroup.position.copy(DP);
+scene.add(deepGroup);
+
+// 海床（深藍灰，提亮到看得清楚；微起伏）
+const dBedGeo=new THREE.PlaneGeometry(48,32,44,30);
+const dbp=dBedGeo.attributes.position;
+for(let i=0;i<dbp.count;i++){ dbp.setZ(i, Math.sin(dbp.getX(i)*.4)*Math.cos(dbp.getY(i)*.3)*0.28); }
+dBedGeo.computeVertexNormals();
+const dBed=new THREE.Mesh(dBedGeo,new THREE.MeshStandardMaterial({color:0x223044,roughness:1}));
+dBed.rotation.x=-Math.PI/2; deepGroup.add(dBed);   // 頂面 local y=0
+// 海床上零星石塊
+[[-15,3],[8,-6],[18,5],[-6,-9],[12,9]].forEach(([x,z])=>{
+  const r=new THREE.Mesh(new THREE.DodecahedronGeometry(0.4+Math.random()*0.4),
+    new THREE.MeshStandardMaterial({color:0x33404f,roughness:1}));
+  r.position.set(x,0.2,z); deepGroup.add(r);
 });
 
-// Optical fibre strands
+// 裸置的電纜，直接躺在海床上
+const dCable=makeCableSegment(48,0.6);
+dCable.position.set(0,0.62,2); deepGroup.add(dCable);
+
+// 海雪（marine snow）
+const SNOW=320; const snowBuf=new Float32Array(SNOW*3);
+for(let i=0;i<SNOW;i++){ snowBuf[i*3]=(Math.random()-.5)*48; snowBuf[i*3+1]=Math.random()*24; snowBuf[i*3+2]=(Math.random()-.5)*32; }
+const snowGeo=new THREE.BufferGeometry();
+snowGeo.setAttribute('position',new THREE.BufferAttribute(snowBuf,3));
+const deepSnow=new THREE.Points(snowGeo,
+  new THREE.PointsMaterial({color:0xcfe2f2,size:.15,transparent:true,opacity:.6,sizeAttenuation:true}));
+deepGroup.add(deepSnow);
+
+// 深海段冷光（打亮纜線與海床一帶；四周自然向暗，維持「深」的氛圍但看得清楚）
+const dpLight=new THREE.PointLight(0x6ec3ef,5,60);
+dpLight.position.set(DP.x,DP.y+7,DP.z+10); scene.add(dpLight);
+const dpFill=new THREE.PointLight(0x9fd0ec,2.5,52);
+dpFill.position.set(DP.x-8,DP.y+12,DP.z+6); scene.add(dpFill);
+
+// 預設先藏起來，交給 ScrollTrigger 依進度開關
+shallowGroup.visible=false; deepGroup.visible=false;
+
+// （嵌回錨點的搜尋移到 STAGES 定義之後——需要過場中段的鏡位）
+
+// ── Cross-section model (at world 16,-4,-22, camera faces it head-on) ──
+// Built layer-by-layer on scroll (#s0a): the story starts at the bare fibres,
+// then each protective layer wraps on from the inside out.
+// Outer group = position / orientation / scale (driven by the s0→s1 transition);
+// inner xsSpin = slow spin around the cable's own axis. Separating them lets the
+// XS shrink and "slot back into" a real cable without fighting the spin.
+const xsGroup = new THREE.Group();
+xsGroup.position.set(16,-4,-22);
+const xsSpin = new THREE.Group();
+xsGroup.add(xsSpin);
+
+// Optical fibre strands — bare glowing lines, visible from the very start.
+// Each strand = a long thin cylinder (the fibre running back along the cable)
+// plus a bright dot on the cut face.
 for(let i=0;i<12;i++){
   const a=(i/12)*Math.PI*2, r=.09;
+  const f=new THREE.Mesh(new THREE.CylinderGeometry(.014,.014,5,6),
+    new THREE.MeshStandardMaterial({color:0x66ddff,emissive:0x66ddff,emissiveIntensity:2.2,roughness:.3}));
+  f.rotation.x=Math.PI/2; f.position.set(Math.cos(a)*r,Math.sin(a)*r,-2.42);
+  xsSpin.add(f);
   const s=new THREE.Mesh(new THREE.CircleGeometry(.025,6),
     new THREE.MeshStandardMaterial({color:0x88eeff,emissive:0x88eeff,emissiveIntensity:3,side:THREE.DoubleSide}));
-  s.position.set(Math.cos(a)*r,Math.sin(a)*r,.08); xsGroup.add(s);
+  s.position.set(Math.cos(a)*r,Math.sin(a)*r,.08); xsSpin.add(s);
 }
+// Center fibre (strand + face dot)
+const cfBody=new THREE.Mesh(new THREE.CylinderGeometry(.013,.013,5,6),
+  new THREE.MeshStandardMaterial({color:0xffffff,emissive:0xffffff,emissiveIntensity:2.6}));
+cfBody.rotation.x=Math.PI/2; cfBody.position.z=-2.42; xsSpin.add(cfBody);
 const cf=new THREE.Mesh(new THREE.CircleGeometry(.022,6),
   new THREE.MeshStandardMaterial({color:0xffffff,emissive:0xffffff,emissiveIntensity:4,side:THREE.DoubleSide}));
-cf.position.z=.08; xsGroup.add(cf);
+cf.position.z=.08; xsSpin.add(cf);
+
+// Light pulse — a signal travelling along the centre fibre toward the cut face
+// (continues the intro's 「訊號變成光」 beat).
+const xsPulse=new THREE.Mesh(new THREE.SphereGeometry(.045,8,8),
+  new THREE.MeshBasicMaterial({color:0xffffff}));
+xsPulse.position.set(0,0,-5); xsSpin.add(xsPulse);
+
+// Protective layers, inner → outer. Order matches the legend rows in #p0.
+// Each layer = cut-face ring + body tube; starts collapsed (scale≈0) and
+// grows outward from the axis as the user scrolls — "wrapping on".
+// 依 dgtlinfra 剖面（由內到外）：光纖（矽膠）→ 鋼絲 → 銅鞘 → PE → 近岸鎧裝＋紗線
+const XS_LAYERS=[
+  {inn:0,   out:.20, color:0x00ccff, emissive:0x004466}, // 光纖束（矽膠包覆）
+  {inn:.20, out:.42, color:0x8aa0b8, emissive:0x2a3340}, // 鋼絲（高張力強度層）
+  {inn:.42, out:.62, color:0xd98a3a, emissive:0x4a2600}, // 銅鞘（導體）
+  {inn:.62, out:.84, color:0x1a2233, emissive:0x000000}, // PE 護套
+  {inn:.84, out:1.05,color:0x6b7480, emissive:0x15181c}, // 鎧裝＋紗線（近岸段才有）
+];
+const xsLayerGroups=[];
+XS_LAYERS.forEach(({inn,out,color,emissive},i)=>{
+  const grp=new THREE.Group();
+  // cut-face ring (z-staggered to avoid z-fighting)
+  const faceGeo=inn===0?new THREE.CircleGeometry(out,48):new THREE.RingGeometry(inn,out,48);
+  const face=new THREE.Mesh(faceGeo,
+    new THREE.MeshStandardMaterial({color,emissive,emissiveIntensity:.8,side:THREE.DoubleSide}));
+  face.position.z=i*.006; grp.add(face);
+  // body tube stretching back along the cable
+  const cyl=new THREE.Mesh(new THREE.CylinderGeometry(out,out,5,48,1,true),
+    new THREE.MeshStandardMaterial({color,emissive,emissiveIntensity:.3,roughness:.5,metalness:.4,side:THREE.DoubleSide}));
+  cyl.rotation.x=Math.PI/2; cyl.position.z=-2.5; grp.add(cyl);
+  grp.scale.set(.0001,.0001,1); // hidden until its scroll beat
+  xsSpin.add(grp); xsLayerGroups.push(grp);
+});
 scene.add(xsGroup);
+
+// Re-embed targets for the s0→s1 transition
+const XS_HOME=new THREE.Vector3(16,-4,-22);        // 解剖位置
+const XS_AXIS=new THREE.Vector3(0,0,-1);           // 纜身延伸方向（局部）
+const XS_Q0=new THREE.Quaternion();                // 起始姿態
+const _xsQT=new THREE.Quaternion();                // 目標姿態（每幀算）
 
 // ── Stars ────────────────────────────────────────
 const sBuf=new Float32Array(3000*3);
 for(let i=0;i<3000;i++){sBuf[i*3]=(Math.random()-.5)*800;sBuf[i*3+1]=Math.random()*300+20;sBuf[i*3+2]=(Math.random()-.5)*800;}
 const sGeo=new THREE.BufferGeometry();
 sGeo.setAttribute('position',new THREE.BufferAttribute(sBuf,3));
-scene.add(new THREE.Points(sGeo,new THREE.PointsMaterial({color:0xffffff,size:.25,sizeAttenuation:true})));
+const stars=new THREE.Points(sGeo,new THREE.PointsMaterial({color:0xffffff,size:.25,sizeAttenuation:true}));
+stars.visible=false; // 淺色主題：白色星點在亮背景上看不到也不合理，先關掉
+scene.add(stars);
 
 // ── Particles ────────────────────────────────────
 const PC=600;
@@ -1220,18 +1453,79 @@ scene.add(new THREE.Points(pGeo,new THREE.PointsMaterial({color:0x0088ff,size:.0
 // 6 stages for 3D (2D overlays at stages 1 & 2 cover the 3D)
 const STAGES=[
   {pos:[16,-4,-17], look:[16,-4,-22], fog:.020},  // 0: cable XS head-on
-  {pos:[12, 1,-10], look:[7, -2,-14], fog:.018},  // 1: [2D shallow covers this]
-  {pos:[28,-4,-24], look:[30,-9,-35], fog:.014},  // 2: [2D deep covers this]
+  {pos:[4,-1,-31],  look:[4,-3.8,-46], fog:.016}, // 1: 淺海埋設（3D diorama @ SH=6,0,-52）
+  {pos:[-9,-25,-27],look:[-15,-29,-46],fog:.020}, // 2: 深海裸放（3D diorama @ DP=-16,-30,-46，鏡頭已下潛）
   {pos:[10, 5, -2], look:[4.94, 1, -7.41], fog:.022},  // 3: landing station (頭城)
   {pos:[0,  50, 30],look:[0,  0,  0], fog:.008},  // 4: Taiwan overview
   {pos:[5,  80, 50],look:[5, -5,  5], fog:.006},  // 5: global (closer zoom — keep far cable endpoints off-screen)
 ];
 
+// Build-up close shot: camera starts almost touching the bare fibres.
+// The look-at is solved at runtime so the glowing centre fibre projects on
+// screen at EXACTLY the same spot as the intro's wifi dot (SVG 763,368) —
+// a match-cut: wifi 圓點 → 光纖圓點.
+const XS_CAM_START={pos:[16.14,-3.92,-21.2], look:[16,-4,-22.9], fog:.026};
+const XS_FIBRE=[16,-4,-21.92]; // centre fibre dot on the cut face (world)
+
+function syncXsMatchCut(){
+  const W=innerWidth||1280, H=innerHeight||720;
+  // Screen position of the wifi dot under preserveAspectRatio="xMidYMid slice"
+  const s=Math.max(W/1440,H/860);
+  const px=(W-1440*s)/2+763*s, py=(H-860*s)/2+368*s;
+  const nx=px/W*2-1, ny=-(py/H*2-1);            // NDC target
+  const tanY=Math.tan(55/2*Math.PI/180), tanX=tanY*(W/H);
+  const tx=nx*tanX, ty=ny*tanY;                 // view-space tangents
+  // Solve camera forward f so the fibre lands at (nx,ny): v = d·(tx·r + ty·u + f)
+  const P=new THREE.Vector3(...XS_CAM_START.pos);
+  const v=new THREE.Vector3(...XS_FIBRE).sub(P).normalize().multiplyScalar(Math.sqrt(1+tx*tx+ty*ty));
+  const up=new THREE.Vector3(0,1,0);
+  let f=v.clone().normalize();
+  for(let k=0;k<3;k++){
+    const r=f.clone().cross(up).normalize();
+    const u=r.clone().cross(f).normalize();
+    f=v.clone().sub(r.multiplyScalar(tx)).sub(u.multiplyScalar(ty)).normalize();
+  }
+  const L=P.clone().add(f.multiplyScalar(1.7));
+  XS_CAM_START.look=[L.x,L.y,L.z];
+}
+syncXsMatchCut();
+
 const cam={
-  px:STAGES[0].pos[0], py:STAGES[0].pos[1], pz:STAGES[0].pos[2],
-  lx:STAGES[0].look[0],ly:STAGES[0].look[1],lz:STAGES[0].look[2],
-  fog:STAGES[0].fog,
+  px:XS_CAM_START.pos[0], py:XS_CAM_START.pos[1], pz:XS_CAM_START.pos[2],
+  lx:XS_CAM_START.look[0],ly:XS_CAM_START.look[1],lz:XS_CAM_START.look[2],
+  fog:XS_CAM_START.fog,
 };
+
+// ── 嵌回錨點：螢幕空間搜尋 ───────────────────────────
+// 世界座標最近的纜線，投影後不一定在畫面裡（會看起來「飛走」）。
+// 改用過場中段（stage 0→1, t≈0.5）的鏡位做投影：找「螢幕上離剖面
+// 最近、且在畫面內」的纜線點——合體就發生在觀眾眼前那條纜線上。
+let xsTargetCurve=null, xsTargetU=0;
+{
+  const mid=(a,b)=>[(a[0]+b[0])/2,(a[1]+b[1])/2,(a[2]+b[2])/2];
+  const mp=mid(STAGES[0].pos,STAGES[1].pos), ml=mid(STAGES[0].look,STAGES[1].look);
+  const camM=new THREE.PerspectiveCamera(55,(innerWidth||1280)/(innerHeight||720),.1,1200);
+  camM.position.set(...mp); camM.lookAt(...ml); camM.updateMatrixWorld();
+  const HOME=new THREE.Vector3(16,-4,-22);
+  const homeS=HOME.clone().project(camM);
+  let best=Infinity;
+  cableCurves.forEach(c=>{
+    for(let k=2;k<=90;k++){
+      const u=k/300; // 只搜近台灣端（u 0.007–0.3），避免嵌去大洋中央
+      const p=c.getPointAt(u), s=p.clone().project(camM);
+      if(s.z<0||s.z>1||Math.abs(s.x)>1.05||Math.abs(s.y)>1.05) continue;
+      const d=(s.x-homeS.x)**2+(s.y-homeS.y)**2;
+      if(d<best){ best=d; xsTargetCurve=c; xsTargetU=u; }
+    }
+  });
+  if(!xsTargetCurve){ // 後備：退回世界座標最近點
+    let bw=Infinity;
+    cableCurves.forEach(c=>{ for(let k=0;k<=200;k++){
+      const u=k/200, d=c.getPointAt(u).distanceToSquared(HOME);
+      if(d<bw){ bw=d; xsTargetCurve=c; xsTargetU=u; }
+    }});
+  }
+}
 
 // ── GSAP ─────────────────────────────────────────
 gsap.registerPlugin(ScrollTrigger);
@@ -1259,8 +1553,27 @@ function showPanel(stage){
 
 function lerp(a,b,t){return a+(b-a)*t;}
 
-const illoShallow=document.getElementById('illo-shallow');
-const illoDeep   =document.getElementById('illo-deep');
+// 深度標尺
+const depthGauge=document.getElementById('depth-gauge');
+const dgCursor=document.getElementById('dgCursor');
+const dgBoundary=document.getElementById('dgBoundary');
+function updateDepthGauge(t){ // t：下潛進度 0(淺海/海面端)→1(深海端)
+  const top=8 + t*(92-8);
+  dgCursor.style.top=top.toFixed(1)+'%';
+  dgBoundary.classList.toggle('lit', top>=42); // 游標越過 1,500m 分界 → 標籤轉橘
+}
+
+// 3D diorama 顯示控制（取代原本的 2D overlay 淡入淡出）
+function setDioramas(stage){
+  shallowGroup.visible = (stage===1); // 只在淺海屏顯示；過場前半段的提前現身交給 i===0 onUpdate 控制
+  deepGroup.visible    = (stage===1 || stage===2);
+  // 淺／深海段用各自的海床；藏掉全域海床(-14)，鏡頭才能乾淨地往下潛到深海(-30)
+  floor.visible        = !(stage===1 || stage===2);
+  // 深度標尺只在淺海→深海這段出現
+  depthGauge.classList.toggle('on', stage===1 || stage===2);
+  if(stage===1) updateDepthGauge(0);   // 停在淺海端（游標近海面）
+  if(stage===2) updateDepthGauge(1);   // 停在深海端（游標近底）
+}
 
 // ── Intro sequence ────────────────────────────────
 // Phone starts at 9× from center (720,520) so it fills the entire viewport.
@@ -1325,39 +1638,82 @@ introTl
 // Phase 5 (0.94→1.0): entire intro fades → 3D scene revealed
   .to('#illo-intro', {opacity:0, ease:'none', duration:0.06}, 0.94);
 
+// ── XS build-up (#s0a): fibre close-up → layers wrap on → full cross-section ──
+// Everything is a pure function of scroll progress, so fast reverse-scrolls
+// can never leave layers in a half-revealed state.
+const legendRows=[...document.querySelectorAll('#p0 .layers .lr')];
+const smooth=t=>t*t*(3-2*t);
+const xsBuildST=ScrollTrigger.create({
+  trigger:'#s0a', start:'top top', end:'bottom top',
+  scrub:1.2,
+  onEnter:    ()=>showPanel(0),
+  onEnterBack:()=>showPanel(0),
+  onUpdate(self){
+    const p=self.progress, e=smooth(p);
+    // Camera: slow dolly back from the fibres to the full head-on framing
+    cam.px=lerp(XS_CAM_START.pos[0], STAGES[0].pos[0], e);
+    cam.py=lerp(XS_CAM_START.pos[1], STAGES[0].pos[1], e);
+    cam.pz=lerp(XS_CAM_START.pos[2], STAGES[0].pos[2], e);
+    cam.lx=lerp(XS_CAM_START.look[0],STAGES[0].look[0],e);
+    cam.ly=lerp(XS_CAM_START.look[1],STAGES[0].look[1],e);
+    cam.lz=lerp(XS_CAM_START.look[2],STAGES[0].look[2],e);
+    cam.fog=lerp(XS_CAM_START.fog,   STAGES[0].fog,    e);
+    // Layers: staggered reveal windows, inner → outer
+    xsLayerGroups.forEach((g,i)=>{
+      const t=Math.min(Math.max((p-(.08+i*.13))/.10,0),1);
+      const s=Math.max(smooth(t),.0001);
+      g.scale.set(s,s,1);
+      if(legendRows[i]) legendRows[i].classList.toggle('lit', t>.5);
+    });
+  },
+});
+
 for(let i=0;i<STAGES.length-1;i++){
   const a=STAGES[i], b=STAGES[i+1];
   ScrollTrigger.create({
     trigger:`#${secs[i]}`,
     start:'top top', end:'bottom top',
     scrub:1.8,
-    onEnter:()=>{
-      showPanel(i);
-      if(i===1) gsap.to(illoShallow,{opacity:1,duration:.5,overwrite:true});
-      if(i===1) gsap.to(illoDeep,{opacity:0,duration:.3});
-      if(i===2) gsap.to(illoDeep,{opacity:1,duration:.5,overwrite:true});
-      if(i===2) gsap.to(illoShallow,{opacity:0,duration:.3});
-      if(i!==1&&i!==2){gsap.to(illoShallow,{opacity:0,duration:.4});gsap.to(illoDeep,{opacity:0,duration:.4});}
-    },
-    onEnterBack:()=>{
-      showPanel(i);
-      if(i===1) gsap.to(illoShallow,{opacity:1,duration:.5,overwrite:true});
-      if(i===1) gsap.to(illoDeep,{opacity:0,duration:.3});
-      if(i===2) gsap.to(illoDeep,{opacity:1,duration:.5,overwrite:true});
-      if(i===2) gsap.to(illoShallow,{opacity:0,duration:.3});
-      if(i!==1&&i!==2){gsap.to(illoShallow,{opacity:0,duration:.4});gsap.to(illoDeep,{opacity:0,duration:.4});}
-    },
+    onEnter:()=>{ showPanel(i); setDioramas(i); },
+    onEnterBack:()=>{ showPanel(i); setDioramas(i); },
     onLeave:()=>{
       const next=Math.min(i+1,STAGES.length-1);
       showPanel(next);
-      // Hide 2D overlays when leaving stage 2
-      if(i===2){gsap.to(illoDeep,{opacity:0,duration:.5});}
+      setDioramas(next); // 離開往下一段時，依下一段更新可見性（例如離開深海→收掉）
     },
     onUpdate(self){
       const t=self.progress;
       cam.px=lerp(a.pos[0],b.pos[0],t); cam.py=lerp(a.pos[1],b.pos[1],t); cam.pz=lerp(a.pos[2],b.pos[2],t);
       cam.lx=lerp(a.look[0],b.look[0],t);cam.ly=lerp(a.look[1],b.look[1],t);cam.lz=lerp(a.look[2],b.look[2],t);
       cam.fog=lerp(a.fog,b.fog,t);
+      if(i===1) updateDepthGauge(t); // 淺海→深海下潛：深度標尺游標往下走、跨過 1,500m
+      if(i===0){ // 剖面→淺海過場：淺海場景（含鋪纜船）只在後半段、鏡頭真的轉向它時才現身，避免太早出現在背景
+        const showSh=t>0.5;
+        shallowGroup.visible=showSh;
+        floor.visible=!showSh; // 同時收掉全域海床，換成淺海自己的海床
+      }
+      if(i===0&&xsTargetCurve){
+        // 「嵌回去」：剖面先縮小，再滑回鏡頭前最近那條實體纜線上、
+        // 軸向對齊切線、粗細縮到與管徑一致——在過場中段就完成合體，
+        // 這一幕看到的就是它融進纜線的瞬間。
+        // 三拍：①原地縮小（0–40%，避免纜線穿過大剖面的中心）
+        //       ②縮小後才滑過去、轉向對齊（30–70%）
+        //       ③貼上後做最後融合，縮到與管徑一致（65–85%）
+        const s1=smooth(Math.min(t/.4,1));                       // 1 → 0.25
+        const s2=smooth(Math.min(Math.max((t-.65)/.2,0),1));     // 0.25 → 0.057
+        const eP=smooth(Math.min(Math.max((t-.3)/.4,0),1));      // 位置＋姿態
+        const pt=xsTargetCurve.getPointAt(xsTargetU), tg=xsTargetCurve.getTangentAt(xsTargetU);
+        _xsQT.setFromUnitVectors(XS_AXIS, tg);
+        xsGroup.quaternion.slerpQuaternions(XS_Q0,_xsQT,eP);
+        xsGroup.position.lerpVectors(XS_HOME,pt,eP);
+        xsGroup.scale.setScalar(lerp(lerp(1,.25,s1),.057,s2));   // 半徑 1.05 → 0.26 → ≈0.06
+        // 鏡頭跟拍：合體完成（~62%）前視線鎖定剖面，主角不出鏡；
+        // 之後才把視線交還給原本通往淺海段的運鏡
+        const w=smooth(Math.min(Math.max((t-.62)/.38,0),1));
+        cam.lx=lerp(xsGroup.position.x,cam.lx,w);
+        cam.ly=lerp(xsGroup.position.y,cam.ly,w);
+        cam.lz=lerp(xsGroup.position.z,cam.lz,w);
+      }
     },
   });
 }
@@ -1383,7 +1739,9 @@ ScrollTrigger.create({
 });
 
 dots.forEach(d=>d.addEventListener('click',()=>{
-  document.getElementById(secs[+d.dataset.i]).scrollIntoView({behavior:'smooth'});
+  const i=+d.dataset.i;
+  // Dot 0 lands at the start of the XS build-up so the wrap-on sequence plays
+  document.getElementById(i===0?'s0a':secs[i]).scrollIntoView({behavior:'smooth'});
 }));
 
 requestAnimationFrame(()=>{ScrollTrigger.refresh();});
@@ -1394,6 +1752,12 @@ function onResize(){
   const H=canvas.clientHeight||innerHeight||720;
   camera.aspect=W/H; camera.updateProjectionMatrix();
   renderer.setSize(W,H);
+  // Re-solve the wifi→fibre match-cut for the new viewport; if the user is
+  // still in/above the intro, snap the held camera to the new solution.
+  syncXsMatchCut();
+  if(typeof xsBuildST!=='undefined' && xsBuildST.progress===0){
+    cam.lx=XS_CAM_START.look[0]; cam.ly=XS_CAM_START.look[1]; cam.lz=XS_CAM_START.look[2];
+  }
 }
 onResize();
 window.addEventListener('resize',onResize);
@@ -1431,8 +1795,12 @@ const oceanPos=oceanGeo.attributes.position;
   });
 
   // XS slow spin + light pulse
-  xsGroup.rotation.z+=.003;
+  xsSpin.rotation.z+=.003;
   xsLight.intensity=3.5+Math.sin(t*1.5)*1.8;
+
+  // Signal pulse racing along the centre fibre toward the cut face
+  xsPulse.position.z=-5.15+((t*1.7)%5.3);
+  xsPulse.scale.setScalar(1+Math.max(0,xsPulse.position.z)*6); // small flare as it exits
 
   // Particles rise
   const pp=pGeo.attributes.position;
@@ -1440,6 +1808,18 @@ const oceanPos=oceanGeo.attributes.position;
     let y=pp.getY(i)+.008; if(y>0) y=-12-Math.random()*2; pp.setY(i,y);
   }
   pp.needsUpdate=true;
+
+  // 淺海：鋪纜船輕輕搖
+  if(shallowGroup.visible){
+    ship.position.y=Math.sin(t*1.2)*0.12;
+    ship.rotation.z=Math.sin(t*0.9)*0.03;
+  }
+  // 深海：海雪緩緩飄落
+  if(deepGroup.visible){
+    const sp=snowGeo.attributes.position;
+    for(let i=0;i<SNOW;i++){ let y=sp.getY(i)-.012; if(y<0) y=24; sp.setY(i,y); }
+    sp.needsUpdate=true;
+  }
 
   renderer.render(scene,camera);
 }());
